@@ -10,11 +10,11 @@
 
 use crate::{
     ebpf,
+    lib::*,
     program::{BuiltinProgram, FunctionRegistry, SBPFVersion},
     static_analysis::CfgNode,
     vm::ContextObject,
 };
-use std::collections::BTreeMap;
 
 fn resolve_label(cfg_nodes: &BTreeMap<usize, CfgNode>, pc: usize) -> &str {
     cfg_nodes
@@ -37,7 +37,7 @@ fn alu_reg_str(name: &str, insn: &ebpf::Insn) -> String {
 fn byteswap_str(name: &str, insn: &ebpf::Insn) -> String {
     match insn.imm {
         16 | 32 | 64 => {}
-        _ => println!("[Disassembler] Warning: Invalid offset value for {name} insn"),
+        _ => log::warn!("[Disassembler] Warning: Invalid offset value for {name} insn"),
     }
     format!("{}{} r{}", name, insn.imm, insn.dst)
 }

@@ -29,8 +29,8 @@ use crate::{
 
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 use crate::jit::{JitCompiler, JitProgram};
+use crate::lib::*;
 use byteorder::{ByteOrder, LittleEndian};
-use std::{collections::BTreeMap, fmt::Debug, mem, ops::Range, str, sync::Arc};
 
 /// Error definitions
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -397,7 +397,7 @@ impl<C: ContextObject> Executable<C> {
         let text_section_info = SectionInfo {
             name: if config.enable_symbol_and_section_labels {
                 elf.section_name(text_section.sh_name())
-                    .and_then(|name| std::str::from_utf8(name).ok())
+                    .and_then(|name| str::from_utf8(name).ok())
                     .unwrap_or(".text")
                     .to_string()
             } else {
@@ -1145,10 +1145,10 @@ impl<C: ContextObject> Executable<C> {
     #[allow(dead_code)]
     fn dump_data(name: &str, prog: &[u8]) {
         let mut eight_bytes: Vec<u8> = Vec::new();
-        println!("{name}");
+        log::info!("{name}");
         for i in prog.iter() {
             if eight_bytes.len() >= 7 {
-                println!("{eight_bytes:02X?}");
+                log::info!("{eight_bytes:02X?}");
                 eight_bytes.clear();
             } else {
                 eight_bytes.push(*i);
