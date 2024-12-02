@@ -18,6 +18,7 @@ use crate::{
         Elf64, ElfParserError,
     },
     error::EbpfError,
+    lib::*,
     memory_region::MemoryRegion,
     program::{BuiltinProgram, FunctionRegistry, SBPFVersion},
     verifier::Verifier,
@@ -27,10 +28,12 @@ use crate::{
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 use crate::jit::{JitCompiler, JitProgram};
 use byteorder::{ByteOrder, LittleEndian};
-use std::{collections::BTreeMap, fmt::Debug, mem, ops::Range, str};
 
-#[cfg(not(feature = "shuttle-test"))]
+#[cfg(all(feature = "std", not(feature = "shuttle-test")))]
 use std::sync::Arc;
+
+#[cfg(not(feature = "std"))]
+use alloc::sync::Arc;
 
 #[cfg(feature = "shuttle-test")]
 use shuttle::sync::Arc;
@@ -139,9 +142,7 @@ fn get_section(elf: &Elf64, name: &[u8]) -> Result<Elf64Shdr, ElfError> {
     }
 
     Err(ElfError::SectionNotFound(
-        std::str::from_utf8(name)
-            .unwrap_or("UTF-8 error")
-            .to_string(),
+        str::from_utf8(name).unwrap_or("UTF-8 error").to_string(),
     ))
 }
 

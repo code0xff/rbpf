@@ -10,6 +10,7 @@
 // copied, modified, or distributed except according to those terms.
 
 //! Virtual machine and JIT compiler for eBPF programs.
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/qmonnet/rbpf/master/misc/rbpf.png",
@@ -17,6 +18,9 @@
 )]
 #![deny(clippy::arithmetic_side_effects)]
 #![deny(clippy::ptr_as_ptr)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
 
 extern crate byteorder;
 extern crate combine;
@@ -26,7 +30,9 @@ extern crate rand;
 extern crate thiserror;
 
 pub mod aligned_memory;
+#[cfg(feature = "std")]
 mod asm_parser;
+#[cfg(feature = "std")]
 pub mod assembler;
 #[cfg(feature = "debugger")]
 pub mod debugger;
@@ -35,7 +41,9 @@ pub mod ebpf;
 pub mod elf;
 pub mod elf_parser;
 pub mod error;
+#[cfg(feature = "std")]
 pub mod fuzz;
+#[cfg(feature = "std")]
 pub mod insn_builder;
 pub mod interpreter;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
@@ -45,11 +53,49 @@ mod memory_management;
 pub mod memory_region;
 pub mod program;
 pub mod static_analysis;
+#[cfg(feature = "std")]
 pub mod syscalls;
 pub mod verifier;
 pub mod vm;
 #[cfg(all(feature = "jit", not(target_os = "windows"), target_arch = "x86_64"))]
 mod x86;
+
+mod lib {
+    #[cfg(feature = "std")]
+    pub use std::{
+        array,
+        cell::{Cell, UnsafeCell},
+        cmp,
+        collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet},
+        error, fmt,
+        fmt::Debug,
+        io, mem,
+        ops::{self, Range},
+        ptr::{self, copy_nonoverlapping},
+        slice, str,
+    };
+    #[cfg(not(feature = "std"))]
+    pub use {
+        alloc::{
+            boxed::Box,
+            collections::{btree_map::Entry, BTreeMap, BTreeSet},
+            format, slice,
+            string::{String, ToString},
+            vec::Vec,
+        },
+        core::{
+            array,
+            cell::{Cell, UnsafeCell},
+            cmp, fmt,
+            fmt::Debug,
+            mem,
+            ops::{self, Range},
+            ptr::{self, copy_nonoverlapping},
+        },
+        core2::io,
+        hashbrown::{HashMap, HashSet},
+    };
+}
 
 trait ErrCheckedArithmetic: Sized {
     fn err_checked_add(self, other: Self) -> Result<Self, ArithmeticOverflow>;
